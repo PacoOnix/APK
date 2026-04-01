@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import {
   IonPage,
   IonHeader,
@@ -23,8 +24,22 @@ const Home: React.FC = () => {
   
   // 2. Inicializa el router
   const router = useIonRouter(); 
+  // Esta función decide a qué puerta tocar dependiendo del dispositivo
+  const getApiUrl = () => {
+    if (Capacitor.getPlatform() === 'android') {
+      // Si estoy en el celular/emulador, uso la IP mágica
+      return 'http://10.0.2.2:8080/o1/public/api'; 
+    } else {
+      // Si estoy en el navegador de la computadora, uso el dominio local
+      return 'http://pactiva.com/o1/public/api'; 
+    }
+  };
+
+
 
   const handleLogin = async () => {
+
+    const baseUrl = getApiUrl();
     if (!usuario.trim() || !password.trim()) {
       setMensaje('Debes ingresar usuario y contraseña');
       return;
@@ -34,7 +49,7 @@ const Home: React.FC = () => {
     setCargando(true);
 
     try {
-      const response = await fetch('http://pactiva.com/o1/public/api/login', {
+      const response = await fetch(`${baseUrl}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
