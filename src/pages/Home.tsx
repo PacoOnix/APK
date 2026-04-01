@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import {
   IonPage,
@@ -10,7 +11,8 @@ import {
   IonInput,
   IonButton,
   IonText,
-  IonImg
+  IonImg,
+  useIonRouter // <-- Nuevo import
 } from '@ionic/react';
 
 const Home: React.FC = () => {
@@ -19,6 +21,9 @@ const Home: React.FC = () => {
   const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
   
+  // 2. Inicializa el router
+  const router = useIonRouter(); 
+
   const handleLogin = async () => {
     if (!usuario.trim() || !password.trim()) {
       setMensaje('Debes ingresar usuario y contraseña');
@@ -33,7 +38,7 @@ const Home: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json' 
         },
         body: JSON.stringify({
           user: usuario, 
@@ -44,12 +49,13 @@ const Home: React.FC = () => {
       const data = await response.json();
 
       if (!response.ok) {
-
-        throw new Error(data.message || 'Credenciales incorrectas o error en el servidor');
+        throw new Error(data.message || 'Credenciales incorrectas');
       }
 
-      console.log('Login exitoso:', data);
-      
+      console.log('Login exitoso, redirigiendo...', data);
+      localStorage.setItem('token', data.data.sal);
+      localStorage.setItem('nombreUsuario', data.data.nombre);
+      router.push('/app', 'forward', 'push');
 
     } catch (error: any) {
       console.error('Error en el login:', error);
@@ -58,7 +64,6 @@ const Home: React.FC = () => {
       setCargando(false);
     }
   };
-
   return (
     <IonPage>
       <IonContent className="ion-padding">
