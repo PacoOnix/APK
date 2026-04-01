@@ -1,22 +1,118 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import ExploreContainer from '../components/ExploreContainer';
-import './Home.css';
+import { useState } from 'react';
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonItem,
+  IonLabel,
+  IonInput,
+  IonButton,
+  IonText,
+  IonImg
+} from '@ionic/react';
 
 const Home: React.FC = () => {
+  const [usuario, setUsuario] = useState('');
+  const [password, setPassword] = useState('');
+  const [mensaje, setMensaje] = useState('');
+  const [cargando, setCargando] = useState(false);
+  
+  const handleLogin = async () => {
+    if (!usuario.trim() || !password.trim()) {
+      setMensaje('Debes ingresar usuario y contraseña');
+      return;
+    }
+
+    setMensaje('');
+    setCargando(true);
+
+    try {
+      const response = await fetch('http://pactiva.com/o1/public/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          user: usuario, 
+          pass: password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+
+        throw new Error(data.message || 'Credenciales incorrectas o error en el servidor');
+      }
+
+      console.log('Login exitoso:', data);
+      
+
+    } catch (error: any) {
+      console.error('Error en el login:', error);
+      setMensaje(error.message || 'Ocurrió un problema de conexión');
+    } finally {
+      setCargando(false);
+    }
+  };
+
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Blank</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent fullscreen>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Blank</IonTitle>
-          </IonToolbar>
-        </IonHeader>
-        <ExploreContainer />
+      <IonContent className="ion-padding">
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            minHeight: '100%',
+            maxWidth: '400px',
+            margin: '0 auto'
+          }}
+        >
+          <IonImg
+            src="/PR.png"
+            alt="Logo"
+            style={{
+              width: '200px',
+              margin: '0 auto 20px auto'
+            }}
+          />
+          {mensaje && (
+            <IonText color="danger" style={{ textAlign: 'center', marginBottom: '15px' }}>
+              <p>{mensaje}</p>
+            </IonText>
+          )}
+          <IonText style={{ textAlign: 'center', marginBottom: '30px' }}>
+            <p>Ingresa tu usuario y contraseña para continuar</p>
+          </IonText>
+
+          <IonItem style={{ marginBottom: '15px', borderRadius: '8px' }}>
+            <IonLabel position="stacked">Usuario</IonLabel>
+            <IonInput
+              type="text"
+              placeholder="Tu usuario"
+              value={usuario}
+              onIonInput={(e) => setUsuario(e.detail.value!)}
+            />
+          </IonItem>
+
+          <IonItem style={{ marginBottom: '20px', borderRadius: '8px' }}>
+            <IonLabel position="stacked">Contraseña</IonLabel>
+            <IonInput
+              type="password"
+              placeholder="********"
+              value={password}
+              onIonInput={(e) => setPassword(e.detail.value!)}
+            />
+          </IonItem>
+
+          <IonButton expand="block" onClick={handleLogin} disabled={cargando}>
+            {cargando ? 'Ingresando...' : 'Iniciar sesión'}
+          </IonButton>
+        </div>
       </IonContent>
     </IonPage>
   );
