@@ -10,6 +10,7 @@ import { homeOutline, peopleOutline, settingsOutline, logOutOutline } from 'ioni
 // 1. IMPORTAMOS TUS NUEVOS ARCHIVOS
 import DashboardView from '../views/DashboardView';
 import ClientesView from '../views/ClientesView';
+import ClienteDetalleView from '../views/ClienteDetalleView';
 
 export default function AppPage() {
   const router = useIonRouter();
@@ -17,7 +18,7 @@ export default function AppPage() {
   
   // 2. CREAMOS EL ESTADO PARA CONTROLAR LA VISTA
   const [vistaActiva, setVistaActiva] = useState<string>('dashboard');
-
+const [clienteSeleccionado, setClienteSeleccionado] = useState<number | null>(null);
   useEffect(() => {
     const usuarioGuardado = localStorage.getItem('nombreUsuario');
     if (usuarioGuardado) setNombre(usuarioGuardado);
@@ -81,7 +82,20 @@ export default function AppPage() {
         <IonContent color="light">
           {/* 3. AQUÍ OCURRE LA MAGIA DEL RENDERIZADO */}
           {vistaActiva === 'dashboard' && <DashboardView nombre={nombre} />}
-          {vistaActiva === 'clientes' && <ClientesView />}
+          {vistaActiva === 'clientes' && (
+    <>
+            {/* Si no hay cliente seleccionado, mostramos la lista */}
+            {!clienteSeleccionado ? (
+              <ClientesView onVerDetalle={(id) => setClienteSeleccionado(id)} />
+            ) : (
+              /* Si hay un ID seleccionado, mostramos el detalle */
+              <ClienteDetalleView 
+                idCliente={clienteSeleccionado} 
+                onRegresar={() => setClienteSeleccionado(null)} 
+              />
+            )}
+          </>
+        )}
         </IonContent>
       </IonPage>
     </>
