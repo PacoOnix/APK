@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef} from 'react';
 import { 
   IonButton, IonIcon, IonText, IonCard, IonCardHeader, 
   IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, 
@@ -7,6 +7,7 @@ import {
 import { arrowBackOutline, cashOutline, callOutline } from 'ionicons/icons';
 import { getApiUrl } from '../config/api';
 import { App } from '@capacitor/app';
+
 
 // 1. INTERFACES ACTUALIZADAS
 interface Telefono {
@@ -31,7 +32,7 @@ interface Props {
 export default function ClienteDetalleView({ idCliente, onRegresar }: Props) {
   const [cliente, setCliente] = useState<DetalleCliente | null>(null);
   const [cargando, setCargando] = useState(true);
-  const [inicioLlamada, setInicioLlamada] = useState<number | null>(null);
+  const inicioLlamadaRef = useRef<number | null>(null);
 
   useEffect(() => {
     const fetchExpediente = async () => {
@@ -55,28 +56,35 @@ export default function ClienteDetalleView({ idCliente, onRegresar }: Props) {
   }, [idCliente]);
 
   // 2. FUNCIÓN DE LLAMADA NATIVA (SIN PLUGINS CONFLICTIVOS)
-  const realizarLlamada = async (telefono?: string) => {
+const realizarLlamada = async (telefono?: string) => {
     if (!telefono) {
       alert("Este cliente no tiene un número de teléfono registrado.");
       return;
     }
 
     try {
-      setInicioLlamada(Date.now());
+      // 1. Guardamos la hora en la caja fuerte de la referencia (Instantáneo)
+      inicioLlamadaRef.current = Date.now();
       
-      // Abre el marcador nativo del celular
+      // 2. Limpiamos cualquier "oyente" anterior por si hubo clics dobles
+      await App.removeAllListeners();
+
+      // 3. Abrimos el marcador nativo
       window.open(`tel:${telefono}`, '_system');
       
+      // 4. Creamos el nuevo oyente
       App.addListener('appStateChange', ({ isActive }) => {
-        if (isActive && inicioLlamada) {
+        // Leemos el valor instantáneo usando .current
+        if (isActive && inicioLlamadaRef.current) {
           const finLlamada = Date.now();
-          const duracionSegundos = Math.floor((finLlamada - inicioLlamada) / 1000);
+          const duracionSegundos = Math.floor((finLlamada - inicioLlamadaRef.current) / 1000);
           
           if (duracionSegundos > 5) { 
              registrarTiempoGestion(duracionSegundos);
           }
           
-          setInicioLlamada(null);
+          // Vaciamos la caja fuerte y apagamos el oyente
+          inicioLlamadaRef.current = null;
           App.removeAllListeners();
         }
       });
